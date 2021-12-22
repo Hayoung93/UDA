@@ -24,8 +24,8 @@ def get_args():
     parser.add_argument("--device", type=str, default="0")
     parser.add_argument("--lr", type=float, default=0.0025)
     parser.add_argument("--tensorboard_path", type=str, default="./runs/eff_uda_noTSA/t2")
-    parser.add_argument("--tsa", action="store_true", default=True)
-    parser.add_argument("--resume", action="store_true", default=True)
+    parser.add_argument("--tsa", action="store_true")
+    parser.add_argument("--resume", action="store_true")
     parser.add_argument("--weight", type=str, default="/data/weights/hayoung/eff_uda_noTSA/t2/model_last.pth")
     args = parser.parse_args()
 
