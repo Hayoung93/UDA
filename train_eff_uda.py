@@ -141,6 +141,8 @@ def train(ep, model, suploader, unsuploader, unsuptransform, supcriterion, unsup
         if args.tsa:
             tsa_mask = get_tsa_mask(sup_outputs, eps, ep, len(unsuploader), i)
             sup_loss = (sup_loss * tsa_mask.max(1)[0]).sum()
+        else:
+            sup_loss = sup_loss.mean()
         unsup_pred = sharpen_softmax(unsup_outputs)
         confidence_mask = (unsup_pred.max(dim=-1)[0] > 0.7).float()  # beta 0.7
         unsup_loss = unsupcriterion(unsup_pred, softmax(unsup_aug_outputs))
