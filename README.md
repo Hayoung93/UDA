@@ -7,11 +7,10 @@
 
 - (Recommand) With Docker
 Use official Pytorch docker image: `pytorch/pytorch:1.8.0-cuda11.1-cudnn8-devel`  
-Install EfficientNet: `pip install efficientnet_pytorch`  
+Install EfficientNet, tqdm: `pip install efficientnet_pytorch tqdm`  
 
 - Without Docker
-Install Pytorch and EfficientNet: `pip install torch==1.8.0 torchvision==0.9.0 efficientnet_pytorch`
-
+Install Pytorch, EfficientNet and tqdm: `pip install torch==1.8.0 torchvision==0.9.0 efficientnet_pytorch tqdm`  
 
 ### Get trained model weight
 
