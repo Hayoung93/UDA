@@ -160,7 +160,7 @@ def eval(ep, model, loader, criterion, writer, eps):
             outputs = model(inputs)
             running_acc = (outputs.argmax(1) == labels).sum().item()
             val_acc += running_acc
-            loss = criterion(outputs, labels)
+            loss = criterion(outputs, labels).sum()
             val_loss += loss.item()
             writer.add_scalar("val loss", loss.item(), ep * len(loader) + i)
             writer.add_scalar("val acc", running_acc, ep * len(loader) + i)
