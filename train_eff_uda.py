@@ -24,6 +24,7 @@ def get_args():
     parser.add_argument("--device", type=str, default="0")
     parser.add_argument("--lr", type=float, default=0.0025)
     parser.add_argument("--tensorboard_path", type=str, default="./runs/eff_uda_noTSA/t2")
+    parser.add_argument("--tsa", action="store_true", default=True)
     args = parser.parse_args()
 
     return args
@@ -126,9 +127,10 @@ def train(ep, model, suploader, unsuploader, unsuptransform, supcriterion, unsup
             unsup_outputs = model(unsup_inputs)
 
         # backward
-        tsa_mask = get_tsa_mask(sup_outputs, eps, ep, len(unsuploader), i)
         sup_loss = supcriterion(sup_outputs, labels)
-        sup_loss = (sup_loss * tsa_mask.max(1)[0]).sum()
+        if args.tsa:
+            tsa_mask = get_tsa_mask(sup_outputs, eps, ep, len(unsuploader), i)
+            sup_loss = (sup_loss * tsa_mask.max(1)[0]).sum()
         unsup_pred = sharpen_softmax(unsup_outputs)
         confidence_mask = (unsup_pred.max(dim=-1)[0] > 0.7).float()  # beta 0.7
         unsup_loss = unsupcriterion(unsup_pred, softmax(unsup_aug_outputs))
