@@ -8,7 +8,7 @@ from torchvision import datasets, transforms
 from tqdm import tqdm
 from efficientnet_pytorch import EfficientNet
 from randaugment import RandAugment
-from utils.misc import SharpenSoftmax, get_tsa_mask
+from utils.misc import SharpenSoftmax, get_tsa_mask, load_full_checkpoint
 
 
 def get_args():
@@ -25,6 +25,8 @@ def get_args():
     parser.add_argument("--lr", type=float, default=0.0025)
     parser.add_argument("--tensorboard_path", type=str, default="./runs/eff_uda_noTSA/t2")
     parser.add_argument("--tsa", action="store_true", default=True)
+    parser.add_argument("--resume", action="store_true", default=True)
+    parser.add_argument("--weight", type=str, default="/data/weights/hayoung/eff_uda_noTSA/t2/model_last.pth")
     args = parser.parse_args()
 
     return args
@@ -71,13 +73,21 @@ def main(args):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = EfficientNet.from_name(args.model_name)
     model._fc = nn.Linear(model._fc.in_features, args.num_classes)
-    model.to(device)
+    model.to(device)    
+    
     supcriterion = nn.CrossEntropyLoss(reduction='none')
     unsupcriterion = nn.KLDivLoss(reduction="none")
     optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=0.9, weight_decay=0.0005)
     scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, args.num_epochs)
+
+    if args.resume:
+        model, optimizer, scheduler, last_epoch  = load_full_checkpoint(model, optimizer, scheduler, args.weight)
+        print("Loaded checkpoint from: {}".format(args.weight))
+        start_epoch = last_epoch + 1
+    else:
+        start_epoch = 0
     
-    for ep in range(args.num_epochs):
+    for ep in range(start_epoch, args.num_epochs):
         scheduler.step()
         print("Epoch {} --------------------------------------------".format(ep + 1))
         train_loss, train_acc, model, optimizer = \

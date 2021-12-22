@@ -18,3 +18,10 @@ def get_tsa_mask(pred, max_epoch, epoch, iter_per_epoch, iteration):
     max_iter = max_epoch * iter_per_epoch
     tsa_th = (epoch * iter_per_epoch + iteration + 1) / max_iter
     return pred.softmax(dim=1) <= tsa_th
+
+def load_full_checkpoint(model, optimizer, scheduler, weight_path):
+    cp = torch.load(weight_path)
+    model.load_state_dict(cp["state_dict"])
+    optimizer.load_state_dict(cp["optimizer"])
+    scheduler.load_state_dict(cp["scheduler"])
+    return model, optimizer, scheduler, cp["epoch"]
