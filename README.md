@@ -16,4 +16,4 @@ Install Pytorch, EfficientNet and tqdm: `pip install torch==1.8.0 torchvision==0
 
 - Install gdown: `pip install gdown`  
 - Download weight:  
-    - Model without TSA: `gdown --id 1zuB9NsAm34PgSsP9MEhSIEkUmPOUlJDG`  
+    - Model without TSA (test acc 0.834875): `gdown --id 1zuB9NsAm34PgSsP9MEhSIEkUmPOUlJDG`  
