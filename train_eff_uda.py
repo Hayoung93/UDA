@@ -81,11 +81,13 @@ def main(args):
     scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, args.num_epochs)
 
     if args.resume:
-        model, optimizer, scheduler, last_epoch  = load_full_checkpoint(model, optimizer, scheduler, args.weight)
+        model, optimizer, scheduler, last_epoch, best_val_loss, best_val_acc = \
+            load_full_checkpoint(model, optimizer, scheduler, args.weight)
         print("Loaded checkpoint from: {}".format(args.weight))
         start_epoch = last_epoch + 1
     else:
         start_epoch = 0
+        best_val_acc = 0.
     
     for ep in range(start_epoch, args.num_epochs):
         scheduler.step()
@@ -104,9 +106,9 @@ def main(args):
         else:
             if val_loss < best_val_loss:
                 best_val_loss = val_loss
-                save_checkpoint(ep, model, optimizer, scheduler, args.results_dir, True)
                 best_val_acc = val_acc
-        save_checkpoint(ep, model, optimizer, scheduler, args.results_dir, False)
+                save_checkpoint(ep, model, optimizer, scheduler, args.results_dir, best_val_loss, best_val_acc, True)
+        save_checkpoint(ep, model, optimizer, scheduler, args.results_dir, best_val_loss, best_val_acc, False)
     print("Best Val Loss: {} / Acc: {}".format(best_val_loss, best_val_acc))
 
 
@@ -181,12 +183,14 @@ def eval(ep, model, loader, criterion, writer, eps):
     return val_loss, val_acc
 
 
-def save_checkpoint(ep, model, optimizer, scheduler, savepath, isbest):
+def save_checkpoint(ep, model, optimizer, scheduler, savepath, best_val_loss, best_val_acc, isbest):
     save_dict = {
         "epoch": ep,
         "state_dict": model.state_dict(),
         "optimizer": optimizer.state_dict(),
         "scheduler": scheduler.state_dict(),
+        "best_val_loss": best_val_loss,
+        "best_val_acc": best_val_acc
     }
     if isbest:
         torch.save(save_dict, os.path.join(savepath, "model_best.pth"))
