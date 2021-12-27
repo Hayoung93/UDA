@@ -24,4 +24,4 @@ def load_full_checkpoint(model, optimizer, scheduler, weight_path):
     model.load_state_dict(cp["state_dict"])
     optimizer.load_state_dict(cp["optimizer"])
     scheduler.load_state_dict(cp["scheduler"])
-    return model, optimizer, scheduler, cp["epoch"]
+    return model, optimizer, scheduler, cp["epoch"], cp["best_val_loss"], cp["best_val_acc"]
