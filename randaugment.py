@@ -74,12 +74,8 @@ class TranslateX(nn.Module):
         self.M = M
     
     def forward(self, img):
-        # if type(img) == PIL.Image:
-        #     max_size = img.size[0]
-        # elif type(img) == torch.Tensor:
-        #     max_size = img.size()[0]
         try:
-            max_size = img.size[0]
+            max_size = img.size()[0]
         except TypeError:
             max_size = img.size()[0]
         return ttf.functional.affine(img, 0, [(max_size - 1) / 10 * self.M, 0], 1, [0, 0])
@@ -92,7 +88,7 @@ class TranslateY(nn.Module):
     
     def forward(self, img):
         try:
-            max_size = img.size[1]
+            max_size = img.size()[1]
         except TypeError:
             max_size = img.size()[1]
         return ttf.functional.affine(img, 0, [0, (max_size - 1) / 10 * self.M], 1, [0, 0])
