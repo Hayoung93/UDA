@@ -1,6 +1,6 @@
 ### Re-implementation for Unsupervised Data Augmentation (UDA)
 
-- Uses EfficientNet-b0 as backbone network
+- Uses EfficientNet-b0, WideResNet-50-2 as backbone network
 - Uses STL-10 dataset
 
 ### Installing environment
