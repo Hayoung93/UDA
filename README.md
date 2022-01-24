@@ -25,6 +25,4 @@ Install Pytorch, EfficientNet and tqdm: `pip install torch==1.8.0 torchvision==0
 - `python train_eff_uda.py`
 
 ### TODO:
-
-- Support CIFAR, SVHN dataset
 - Add configuration file
