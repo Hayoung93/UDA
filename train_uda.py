@@ -11,6 +11,8 @@ from efficientnet_pytorch import EfficientNet
 from torch_ema import ExponentialMovingAverage
 from randaugment import RandAugment
 from utils.misc import SharpenSoftmax, get_tsa_mask, load_full_checkpoint
+from config_uda import get_cfg_defaults
+from models.wideresnet import WideResNet
 
 
 def get_args():
@@ -20,12 +22,12 @@ def get_args():
     parser.add_argument("--model_arch", default="efficientnet")
     parser.add_argument("--model_name", default="efficientnet-b0")
     parser.add_argument("--num_epochs", default=300, type=int)
-    parser.add_argument("--results_dir", type=str, default="/data/weights/hayoung/uda/t1")
+    parser.add_argument("--results_dir", type=str, default="/data/weights/hayoung/uda/t2-wrn-28-2")
     parser.add_argument("--batch_size", default=32, type=int)
     parser.add_argument("--datadir", type=str, default="/data/data/stl10")
     parser.add_argument("--device", type=str, default="0")
     parser.add_argument("--lr", type=float, default=0.015)
-    parser.add_argument("--tensorboard_path", type=str, default="./runs/uda/t1")
+    parser.add_argument("--tensorboard_path", type=str, default="./runs/uda/t2-wrn-28-2")
     parser.add_argument("--tsa", action="store_true")
     parser.add_argument("--resume", action="store_true")
     parser.add_argument("--ema", action="store_true")
@@ -57,7 +59,6 @@ def get_loaders(args, resolution, train_transform=None, test_transform=None):
     train_transform_u = transforms.Compose([
         transforms.Resize(resolution),
         transforms.PILToTensor(),
-        # transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
     ])
     # dataset
     if args.dataset_name == "stl10":
@@ -79,8 +80,9 @@ def get_model(args, device):
         model = EfficientNet.from_name(args.model_name)
         model._fc = nn.Linear(model._fc.in_features, args.num_classes)
     elif args.model_arch == "wideresnet":
-        model = eval("models." + args.model_name + "(pretrained=False)")  # wide_resnet50_2
-        model.fc = nn.Linear(model.fc.in_features, args.num_classes)
+        depth = int(args.model_name.split("-")[1])
+        w_factor = int(args.model_name.split("-")[2])
+        model = WideResNet(depth, args.num_classes, w_factor)
     else:
         raise Exception("Not supported network architecture")
 
@@ -253,6 +255,8 @@ def save_checkpoint(ep, model, optimizer, scheduler, savepath, best_val_loss, be
 
 if __name__ == "__main__":
     args = get_args()
+    # cfg = get_cfg_defaults()
+    # args = update_args(args, cfg)
     os.environ["CUDA_VISIBLE_DEVICES"] = str(args.device)
     os.makedirs(args.results_dir, exist_ok=True)
     main(args)
