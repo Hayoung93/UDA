@@ -114,7 +114,10 @@ def main(args):
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = get_model(args, device)
-    ema = None  # temporarily None
+    if args.ema:
+        ema_model = ExponentialMovingAverage(model.parameters(), decay=0.9999)
+    else:
+        ema_model = None  # temporarily None
     
     supcriterion = nn.CrossEntropyLoss(reduction='none')
     unsupcriterion = nn.KLDivLoss(reduction="none")
@@ -135,9 +138,9 @@ def main(args):
         print("Epoch {} --------------------------------------------".format(ep + 1))
         train_loss, train_acc, model, optimizer = \
             train(ep, model, trainloader, trainloader_u, train_transform_u,
-                  supcriterion, unsupcriterion, optimizer, writer, args.num_epochs, ema)
+                  supcriterion, unsupcriterion, optimizer, writer, args.num_epochs, ema_model)
         print("Train loss: {}\tTrain acc: {}".format(train_loss, train_acc))
-        val_loss, val_acc = eval_model(ep, model, valloader, supcriterion, writer, args.num_epochs, ema)
+        val_loss, val_acc = eval_model(ep, model, valloader, supcriterion, writer, args.num_epochs, ema_model)
         print("Val loss: {}\tVal acc: {}".format(val_loss, val_acc))
         print("--------------------------------------------")
         # scheduler.step(val_loss)
@@ -153,7 +156,7 @@ def main(args):
     print("Best Val Loss: {} / Acc: {}".format(best_val_loss, best_val_acc))
 
 
-def train(ep, model, suploader, unsuploader, unsuptransform, supcriterion, unsupcriterion, optimizer, writer, eps, ema):
+def train(ep, model, suploader, unsuploader, unsuptransform, supcriterion, unsupcriterion, optimizer, writer, eps, ema_model):
     model.train()
     train_loss = 0
     train_acc = 0
@@ -195,9 +198,8 @@ def train(ep, model, suploader, unsuploader, unsuptransform, supcriterion, unsup
         train_loss += full_loss.item()
         full_loss.backward() 
         optimizer.step()
-        if ema is not None:
-            ema.update()
-        
+        if ema_model is not None:
+            ema_model.update()
         running_acc =(sup_outputs.argmax(1) == labels).sum().item() 
         train_acc += running_acc
         writer.add_scalar("train acc", running_acc, ep * len(unsuploader) + i)
@@ -206,12 +208,12 @@ def train(ep, model, suploader, unsuploader, unsuptransform, supcriterion, unsup
     return train_loss, train_acc, model, optimizer
 
 
-def eval_model(ep, model, loader, criterion, writer, eps, ema):
+def eval_model(ep, model, loader, criterion, writer, eps, ema_model):
     model.eval()
     val_loss = 0
     val_acc = 0
-    if ema is not None:
-        with ema.average_parameters():
+    if ema_model is not None:
+        with ema_model.average_parameters():
             with torch.no_grad():
                 for i, (inputs, labels) in enumerate(loader):
                     inputs, labels = inputs.cuda(), labels.cuda()
@@ -258,5 +260,11 @@ if __name__ == "__main__":
     # cfg = get_cfg_defaults()
     # args = update_args(args, cfg)
     os.environ["CUDA_VISIBLE_DEVICES"] = str(args.device)
+    if args.results_dir[-1] == "/":
+        args.results_dir = args.results_dir[:-1]
+    args.results_dir = args.results_dir + "_b" + str(args.batch_size) + "l" + str(args.lr)[2:]
+    while os.path.exists(args.results_dir):
+        i = 1
+        args.results_dir = args.results_dir + f"_v{i}"
     os.makedirs(args.results_dir, exist_ok=True)
     main(args)
